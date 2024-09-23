@@ -13,6 +13,7 @@ type route struct {
 	pattern      *regexp.Regexp
 	innerHandler http.HandlerFunc
 	paramKeys    []string
+	isAuth       bool
 }
 
 type router struct {
@@ -23,11 +24,14 @@ func NewRouter() *router {
 	return &router{routes: []route{}}
 }
 
-func (r *router) GET(pattern string, handler http.HandlerFunc) {
-	r.addRoute(http.MethodGet, pattern, handler)
+func (r *router) GET(isAuth bool, pattern string, handler http.HandlerFunc) {
+	r.addRoute(http.MethodGet, isAuth, pattern, handler)
+}
+func (r *router) POST(isAuth bool, pattern string, handler http.HandlerFunc) {
+	r.addRoute(http.MethodPost, isAuth, pattern, handler)
 }
 
-func (r *router) addRoute(method, endpoint string, handler http.HandlerFunc) {
+func (r *router) addRoute(method string, isAuth bool, endpoint string, handler http.HandlerFunc) {
 	// handle path parameters
 	pathParamPattern := regexp.MustCompile(":([a-z]+)")
 	matches := pathParamPattern.FindAllStringSubmatch(endpoint, -1)
@@ -41,7 +45,7 @@ func (r *router) addRoute(method, endpoint string, handler http.HandlerFunc) {
 		}
 	}
 
-	route := route{method, regexp.MustCompile("^" + endpoint + "$"), handler, paramKeys}
+	route := route{method, regexp.MustCompile("^" + endpoint + "$"), handler, paramKeys, isAuth}
 	r.routes = append(r.routes, route)
 }
 
@@ -61,6 +65,14 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				allow = append(allow, route.method)
 				continue
 			}
+			if route.isAuth {
+				_, err := GetAuthCookie(req)
+				if err != nil {
+					http.Redirect(w, req, "/login", http.StatusSeeOther)
+					return
+				}
+			}
+			//todo: add auth claim to context
 			route.handler(w, buildContext(req, route.paramKeys, matches[1:]))
 			return
 		}
