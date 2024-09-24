@@ -1,26 +1,62 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
 type Template struct {
-	templates *template.Template
+	templates map[string]*template.Template
 }
 
 func (t *Template) Render(w http.ResponseWriter, name string, data interface{}) error {
-	e := t.templates.ExecuteTemplate(w, name, data)
+	tmpl, ok := t.templates[name]
+	if !ok {
+		http.Error(w, fmt.Sprintf("The template %s does not exist.", name),
+			http.StatusInternalServerError)
+	}
+
+	e := tmpl.ExecuteTemplate(w, name, data)
 	if e != nil {
 		print(e)
 	}
 	return e
 }
 
-func LoadTemplates(path string) *Template {
-	tmpl := template.Must(template.ParseGlob(path))
+func LoadTemplates() *Template {
+	templates := make(map[string]*template.Template)
+	layoutFiles, err := filepath.Glob("ui/templates/components/*.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	includeFiles, err := filepath.Glob("ui/templates/pages/*.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mainTemplate := template.New("main")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range includeFiles {
+		fileName := strings.TrimSuffix(filepath.Base(file),".html")
+		files := append(layoutFiles, file)
+		templates[fileName], err = mainTemplate.Clone()
+		if err != nil {
+			log.Fatal(err)
+		}	
+		templates[fileName] = template.Must(templates[fileName].ParseFiles(files...))
+	}
+
+	log.Println("templates loading successful")
 	t := &Template{
-		templates: tmpl,
+		templates: templates,
 	}
 	return t
 }

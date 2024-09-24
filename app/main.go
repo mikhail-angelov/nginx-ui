@@ -13,7 +13,7 @@ const IS_AUTH = true
 
 func main() {
 	router := server.NewRouter()
-	templates := server.LoadTemplates("ui/templates/*.tmpl")
+	templates := server.LoadTemplates()
 
 	router.GET(IS_AUTH, "/test/:id", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.Context().Value(server.ContextKey("id")))      // logs the first path parameter
@@ -22,7 +22,7 @@ func main() {
 			"Name": r.Context().Value(server.ContextKey("id")),
 		}
 
-		templates.Render(w, "index", data)
+		templates.Render(w, "dashboard", data)
 	})
 	router.GET(IS_AUTH, "/", func(w http.ResponseWriter, r *http.Request) {
 
@@ -30,7 +30,16 @@ func main() {
 			"Name": "test",
 		}
 
-		templates.Render(w, "index", data)
+		templates.Render(w, "dashboard", data)
+
+	})
+	router.GET(IS_AUTH, "/edit/:file", func(w http.ResponseWriter, r *http.Request) {
+
+		data := map[string]interface{}{
+			"Name": r.Context().Value(server.ContextKey("file")),
+		}
+
+		templates.Render(w, "edit-file", data)
 
 	})
 
