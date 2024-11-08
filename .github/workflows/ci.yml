@@ -1,0 +1,25 @@
+name: ci
+on:
+  push:
+    branches:
+      - master
+jobs:
+  saas-build:
+    runs-on: ubuntu-latest 
+    permissions:
+      contents: write
+      actions: write
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+        TAG: $((${{ github.run_number }}+3000))
+        VER: ${{ github.run_number }}
+    steps:
+    - name: test
+      uses: actions/checkout@v2
+
+    - name: Set git tag
+      run: |
+        echo "TAG=${TAG}, $(($VER+3000))"
+

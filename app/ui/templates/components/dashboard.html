@@ -1,0 +1,14 @@
+{{define "dashboard"}}
+<div id="content">
+  <button
+    style="margin: 8px; color: green"
+    hx-post="/add"
+    hx-prompt="Enter a name for the new config"
+    hx-target="#content"
+    hx-swap="innerHTML"
+  >
+    Add Config
+  </button>
+  <div style="color: red">{{.Error}}</div>
+</div>
+{{end}}

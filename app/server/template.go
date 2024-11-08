@@ -26,6 +26,18 @@ func (t *Template) Render(w http.ResponseWriter, name string, data interface{}) 
 	}
 	return e
 }
+func (t *Template) SubRender(w http.ResponseWriter, name string,  component string, data interface{}) error {
+	tmpl, ok := t.templates[name]
+	if !ok {
+		http.Error(w, fmt.Sprintf("The template %s does not exist.", name),
+			http.StatusInternalServerError)
+	}
+	e := tmpl.ExecuteTemplate(w, component, data)
+	if e != nil {
+		print(e)
+	}
+	return e
+}
 
 func LoadTemplates() *Template {
 	templates := make(map[string]*template.Template)

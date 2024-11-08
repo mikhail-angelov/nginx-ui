@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./app/temp:/etc/nginx
+    ports:
+      - 8888:80
+    command: nginx -g "daemon off;"
+    networks:
+      webnet:
+
+networks:
+  webnet:

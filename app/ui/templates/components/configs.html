@@ -1,0 +1,12 @@
+{{define "configs"}}
+  {{range .Configs}}
+  <button
+    class="link-btn"
+    hx-get="/edit/{{.}}"
+    hx-target="#content"
+    hx-swap="innerHTML"
+  >
+    {{.}}
+  </button>
+  {{end}}
+{{end}}

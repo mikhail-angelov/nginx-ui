@@ -65,15 +65,12 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				allow = append(allow, route.method)
 				continue
 			}
-			if route.isAuth {
-				_, err := GetAuthCookie(req)
-				if err != nil {
-					http.Redirect(w, req, "/login", http.StatusSeeOther)
-					return
-				}
+			claim, _ := GetAuthCookie(req)
+			urlPath := make(map[string]string)
+			for i := 0; i < len(route.paramKeys); i++ {
+				urlPath[route.paramKeys[i]] = matches[i+1]
 			}
-			//todo: add auth claim to context
-			route.handler(w, buildContext(req, route.paramKeys, matches[1:]))
+			route.handler(w, buildContext(req, urlPath, claim))
 			return
 		}
 	}
@@ -81,6 +78,13 @@ func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Allow", strings.Join(allow, ", "))
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
+	}
+	//process static files
+	if strings.HasPrefix(req.URL.Path, "/js/") {
+		http.ServeFile(w, req, "ui/static"+strings.TrimSuffix(req.URL.Path, "/+esm"))
+	}
+	if strings.HasPrefix(req.URL.Path, "/css/") {
+		http.ServeFile(w, req, "ui/static"+req.URL.Path)
 	}
 	http.NotFound(w, req)
 }
@@ -91,10 +95,14 @@ type ContextKey string
 
 // Returns a shallow-copy of the request with an updated context,
 // including path parameters
-func buildContext(req *http.Request, paramKeys, paramValues []string) *http.Request {
+func buildContext(req *http.Request, urlPath map[string]string, claim map[string]string) *http.Request {
 	ctx := req.Context()
-	for i := 0; i < len(paramKeys); i++ {
-		ctx = context.WithValue(ctx, ContextKey(paramKeys[i]), paramValues[i])
+	if urlPath != nil {
+		ctx = context.WithValue(ctx, ContextKey("path"), urlPath)
 	}
+	if claim != nil {
+		ctx = context.WithValue(ctx, ContextKey("claims"), claim)
+	}
+
 	return req.WithContext(ctx)
 }

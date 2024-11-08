@@ -1,0 +1,19 @@
+{{define "index"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGINX ui</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body hx-target="body" hx-swap="innerHTML" style="margin:0; width: 100vw; height: 100vh; display: flex; flex-direction: column;">
+    {{if .IsAuth}}
+        {{template "main" .}}
+    {{else}}
+        {{template "login" .}}
+    {{end}}
+</body>
+</html>
+{{end}}

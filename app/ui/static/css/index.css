@@ -1,0 +1,18 @@
+#reset
+body{
+    font-family: 'Roboto', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+.link-btn{
+    background-color: transparent;
+    border: 0;
+    color: black;
+    text-decoration: none;
+    margin-top: 10px;
+    margin-right: 10px;
+    text-align: start;
+    cursor: pointer;
+}

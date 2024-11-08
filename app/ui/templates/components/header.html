@@ -3,7 +3,7 @@
 <div class="header" style="display:flex; justify-content:space-between; align-items:center; height: 40px; border: 1px solid; padding: 0 12px;">
 <h3>NGINX ui</h3>
 
-<form action="/logout" method="post">
+<form hx-post="/logout" hx-target="body" hx-swap="innerHTML">
     <button type="submit">Logout</button>
 </form>
 </div>

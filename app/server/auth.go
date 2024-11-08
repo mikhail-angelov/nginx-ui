@@ -24,7 +24,7 @@ func CleanAuthCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &cookie)
 }
 
-func GetAuthCookie(r *http.Request) (jwt.Claims, error) {
+func GetAuthCookie(r *http.Request) (map[string]string, error) {
 	cookie, err := r.Cookie(cookieName)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func createToken(username string) (string, error) {
 	return tokenString, nil
 }
 
-func verifyToken(tokenString string) (jwt.Claims, error) {
+func verifyToken(tokenString string) (map[string]string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
@@ -59,6 +59,8 @@ func verifyToken(tokenString string) (jwt.Claims, error) {
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
+	claim:=make(map[string]string)
+	claim["username"]=token.Claims.(jwt.MapClaims)["username"].(string)
 
-	return token.Claims, nil
+	return claim, nil
 }

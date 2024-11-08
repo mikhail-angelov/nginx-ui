@@ -1,0 +1,11 @@
+{{define "login"}}
+<p>NGINX ui</p>
+<form hx-post="/login" hx-target="body" hx-swap="innerHTML">
+  <label for="email">Email:</label><br />
+  <input type="text" id="email" name="email" /><br />
+  <label for="password">Password:</label><br />
+  <input type="password" id="password" name="password" /><br /><br />
+  <p id="error" style="color: red">{{ .Error }}</p>
+  <input type="submit" value="Submit" />
+</form>
+{{end}}
