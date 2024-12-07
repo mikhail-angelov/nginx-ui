@@ -1,14 +1,14 @@
 {{define "dashboard"}}
 <div id="content">
   <button
-    style="margin: 8px; color: green"
-    hx-post="/add"
-    hx-prompt="Enter a name for the new config"
-    hx-target="#content"
-    hx-swap="innerHTML"
+    class="outline btn-sm"
+    hx-get="/add-config-modal"
+    hx-target="body"
+    hx-swap="beforeend"
   >
-    Add Config
+    +Add
   </button>
+
   <div style="color: red">{{.Error}}</div>
 </div>
 {{end}}

@@ -1,5 +1,6 @@
 {{define "configs"}}
   {{range .Configs}}
+  <li>
   <button
     class="link-btn"
     hx-get="/edit/{{.}}"
@@ -8,5 +9,6 @@
   >
     {{.}}
   </button>
+</li>
   {{end}}
 {{end}}

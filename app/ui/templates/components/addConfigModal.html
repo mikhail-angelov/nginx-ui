@@ -1,0 +1,30 @@
+{{define "addConfigModal"}}
+
+<div
+  id="add-config-modal"
+  class="modal"
+  _="on closeModal add .closing then wait for animationend then remove me"
+>
+  <div class="modal-underlay" _="on click trigger closeModal"></div>
+  <article class="modal-content">
+    <header class="flex justify-between">
+      <h2>Add New Configuration</h2>
+      <a
+        href="#"
+        aria-label="Close"
+        class="close"
+        _="on click trigger closeModal"
+        >&times;</a
+      >
+    </header>
+    <form hx-post="/add-config" hx-target="this" hx-swap="outerHTML">
+      <label for="name">Enter a name for the new config:</label>
+      <input type="text" id="name" name="name" required />
+      <footer class="flex">
+        <button type="submit" class="contrast" _="on click trigger closeModal">Save</button>
+      </footer>
+    </form>
+  </article>
+</div>
+
+{{end}}

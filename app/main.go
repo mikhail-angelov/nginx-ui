@@ -93,17 +93,20 @@ func main() {
 			"Error":   error,
 		}
 
-		
 		templates.SubRender(w, "index", "editor", data)
 	})
 
-	router.POST(IS_AUTH, "/add", func(w http.ResponseWriter, r *http.Request) {
+	router.GET(IS_AUTH, "/add-config-modal", func(w http.ResponseWriter, r *http.Request) {
+
+		templates.SubRender(w, "index", "addConfigModal", nil)
+	})
+	router.POST(IS_AUTH, "/add-config", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
 
 		now := time.Now()
-		name := r.Header.Get("HX-Prompt")
+		name := r.FormValue("name")
 		if name == "" {
-		name = now.Format("2024-10-01-15-04-05")
+			name = now.Format("2024-10-01-15-04-05")
 		}
 		_, err := nginx.AddConfig(name, "")
 		if err != nil {
@@ -177,7 +180,7 @@ func main() {
 		}
 
 		data := map[string]interface{}{
-			"IsAuth": true,
+			"IsAuth":  true,
 			"Configs": configs,
 			"Error":   error,
 		}
@@ -186,13 +189,12 @@ func main() {
 		templates.SubRender(w, "index", "dashboard", data)
 	})
 
-
 	router.POST(false, "/login", func(w http.ResponseWriter, r *http.Request) {
 		//validate email and password
-		email:=r.FormValue("email")
-		password:=r.FormValue("password")
+		email := r.FormValue("email")
+		password := r.FormValue("password")
 		data := make(map[string]interface{})
-		fmt.Println(email+":"+password)
+		fmt.Println(email + ":" + password)
 		error := ""
 		if password == "" {
 			data["IsAuth"] = false

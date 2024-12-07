@@ -1,11 +1,31 @@
 {{define "login"}}
-<p>NGINX ui</p>
-<form hx-post="/login" hx-target="body" hx-swap="innerHTML">
-  <label for="email">Email:</label><br />
-  <input type="text" id="email" name="email" /><br />
-  <label for="password">Password:</label><br />
-  <input type="password" id="password" name="password" /><br /><br />
-  <p id="error" style="color: red">{{ .Error }}</p>
-  <input type="submit" value="Submit" />
-</form>
+<div class="container-fluid h-100 flex justify-center items-center">
+  <article>
+    <p>NGINX ui</p>
+    <form hx-post="/login" hx-target="body" hx-swap="innerHTML">
+      <fieldset>
+        <label>
+          Email
+          <input
+            id="email"
+            name="email"
+            placeholder="email"
+            autocomplete="email"
+          />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="password"
+          />
+        </label>
+      </fieldset>
+      <p id="error" style="color: red">{{ .Error }}</p>
+      <button type="submit">Sign In</button>
+    </form>
+  </article>
+</div>
 {{end}}

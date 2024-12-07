@@ -1,34 +1,19 @@
 {{define "layout"}}
-<div
-  id="main"
-  style="display: flex; flex-direction: column; flex: 1; height: 100vh"
->
   {{template "header" .}}
-  <div style="display: flex; flex: 1; border: 1px solid">
-    <div
-      class="side-nav"
-      style="
-        display: flex;
-        flex-direction: column;
-        width: 240px;
-        border: 1px solid;
-      "
-    >
-      {{template "sideNav" .}}
-    </div>
+  <main class="flex" style="flex: 1;">
+    
+    {{template "sideNav" .}}
     <div
       id="content"
       style="
         display: flex;
         width: 100%;
-        border: 1px solid;
         padding: 8px;
         overflow: auto;
       "
     >
       {{block "content" .}}{{end}}
     </div>
-  </div>
+  </main>
   {{template "footer" .}}
-</div>
 {{end}}

@@ -1,24 +1,37 @@
 {{define "sideNav"}}
-<div style="display: flex; flex-direction: column; padding: 0; margin: 8px">
-  <button class="link-btn" hx-get="/" hx-target="body" hx-swap="innerHTML">
-    Dashboard
-  </button>
-  <button
-    class="link-btn"
-    hx-get="/edit/main"
-    hx-target="#content"
-    hx-swap="innerHTML"
-  >
-    Main Config
-  </button>
-  <div
-    id="configs"
-    hx-get="/configs"
-    hx-target="#configs"
-    hx-swap="innerHTML"
-    hx-trigger="refreshConfigs from:body"
-  >
-  {{template "configs" .}} 
-</div>
-</div>
+<aside style="width: 340px;border-right: 0.5px solid gray;">
+  <nav>
+    <ul>
+      <li>
+        <button
+          class="link-btn"
+          hx-get="/"
+          hx-target="body"
+          hx-swap="innerHTML"
+        >
+          Dashboard
+        </button>
+      </li>
+      <li>
+        <button
+          class="link-btn"
+          hx-get="/edit/main"
+          hx-target="#content"
+          hx-swap="innerHTML"
+        >
+          Main Config
+        </button>
+      </li>
+      <div
+        id="configs"
+        hx-get="/configs"
+        hx-target="#configs"
+        hx-swap="innerHTML"
+        hx-trigger="refreshConfigs from:body"
+      >
+        {{template "configs" .}}
+      </div>
+    </ul>
+  </nav>
+</aside>
 {{end}}

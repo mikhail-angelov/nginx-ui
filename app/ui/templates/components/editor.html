@@ -8,13 +8,16 @@
       <h4 style="margin: 0">{{.Name}}</h4>
       <div
         id="status"
-        style="display: flex; justify-content: center; align-items: center"
+        class="flex items-center justify-center"
       >
         {{ template "status" . }}
       </div>
-      <button id="validate" style="margin: 8px">Validate</button>
-      <button id="save" style="margin: 8px; color: green">Save</button>
+      <button id="validate" class="outline btn-sm" style="margin: 8px">
+        Validate
+      </button>
+      <button id="save" class="outline btn-sm" style="margin: 8px;color: green">Save</button>
       <button
+        class="outline btn-sm"
         style="margin: 8px; color: red"
         hx-post="/remove/{{.Name}}"
         hx-target="#content"
@@ -24,12 +27,12 @@
         Remove
       </button>
     </div>
+
     <button
-      style="margin: 8px; color: green"
-      hx-post="/add"
-      hx-target="#content"
-      hx-swap="innerHTML"
-      hx-prompt="Enter a name for the new config"
+      class="outline btn-sm"
+      hx-get="/add-config-modal"
+      hx-target="body"
+      hx-swap="beforeend"
     >
       +Add
     </button>
