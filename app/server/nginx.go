@@ -17,12 +17,11 @@ func NewNginx(rootPath string, isDev bool) *nginx {
 	return &nginx{rootPath: rootPath, isDev: isDev}
 }
 
-func (n *nginx) getFullName(name string) string {
-	fullPath := n.rootPath + "/conf/" + name + ".conf"
-	if name == "main" {
-		fullPath = n.rootPath + "/nginx.conf"
+func (n *nginx) getFullName(domain string) string {
+	if domain == "main" {
+		return n.rootPath + "/nginx.conf"
 	}
-	return fullPath
+	return n.rootPath + "/conf/" + domain + "/nginx.conf"
 }
 func (n *nginx) runNginxCommand(args []string) string {
 	executable := "docker"
@@ -63,36 +62,8 @@ func (n *nginx) GetConfig(name string) (string, error) {
 	}
 	return string(content), nil
 }
-func (n *nginx) AddConfig(name string, content string) (string, error) {
-	err := n.SetConfig(name, content)
-	if err != nil {
-		return "", err
-	}
-	return name, nil
-}
-func (n *nginx) RemoveConfig(name string) error {
-	if name == "main" {
-		return nil
-	}
-	fullPath := n.getFullName(name)
-	err := os.Remove(fullPath)
-	return err
-}
 
 func (n *nginx) SetConfig(name string, content string) error {
 	fullPath := n.getFullName(name)
 	return os.WriteFile(fullPath, []byte(content), 0644)
-}
-
-func (n *nginx) GetListOfConfigs() ([]string, error) {
-	var names []string
-	files, err := os.ReadDir(n.rootPath + "/conf")
-	if err != nil {
-		return names, err
-	}
-	for _, file := range files {
-		name := strings.TrimSuffix(file.Name(), ".conf")
-		names = append(names, name)
-	}
-	return names, nil
 }

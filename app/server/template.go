@@ -26,7 +26,7 @@ func (t *Template) Render(w http.ResponseWriter, name string, data interface{}) 
 	}
 	return e
 }
-func (t *Template) SubRender(w http.ResponseWriter, name string,  component string, data interface{}) error {
+func (t *Template) SubRender(w http.ResponseWriter, name string, component string, data interface{}) error {
 	tmpl, ok := t.templates[name]
 	if !ok {
 		http.Error(w, fmt.Sprintf("The template %s does not exist.", name),
@@ -57,12 +57,12 @@ func LoadTemplates() *Template {
 		log.Fatal(err)
 	}
 	for _, file := range includeFiles {
-		fileName := strings.TrimSuffix(filepath.Base(file),".html")
+		fileName := strings.TrimSuffix(filepath.Base(file), ".html")
 		files := append(layoutFiles, file)
 		templates[fileName], err = mainTemplate.Clone()
 		if err != nil {
 			log.Fatal(err)
-		}	
+		}
 		templates[fileName] = template.Must(templates[fileName].ParseFiles(files...))
 	}
 
