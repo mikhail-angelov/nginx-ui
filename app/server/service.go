@@ -66,7 +66,12 @@ func (s *Service) AddDomain(domain string) error {
 	}
 
 	// Generate nginx.conf for the new domain
-	err = s.generateNginxConfig(domain)
+	templatePaths, err := filepath.Glob("ui/templates/configs/nginx.tmpl")
+	if err != nil || len(templatePaths) == 0 {
+		return errors.New("template file not found")
+	}
+	templatePath := templatePaths[0]
+	err = s.generateNginxConfig(domain, templatePath)
 	if err != nil {
 		os.RemoveAll(s.cacheDir + "/" + domain)
 		return err
@@ -114,31 +119,19 @@ func (s *Service) checkAndRefreshCertificates() {
 	}
 }
 
-func (s *Service) generateNginxConfig(domain string) error {
-	// Define the path to the template file
-	templatePaths, err := filepath.Glob("ui/templates/configs/nginx.tmpl")
-	if err != nil || len(templatePaths) == 0 {
-		return errors.New("template file not found")
-	}
-	templatePath := templatePaths[0]
-
-	// Parse the template file
+func (s *Service) generateNginxConfig(domain string, templatePath string) error {
 	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return err
 	}
 
-	// Define the path to the output nginx.conf file
 	outputPath := filepath.Join(s.cacheDir, domain, "nginx.conf")
-
-	// Create the output file
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
 		return err
 	}
 	defer outputFile.Close()
 
-	// Execute the template with the domain data
 	data := struct {
 		Domain  string
 		Path    string

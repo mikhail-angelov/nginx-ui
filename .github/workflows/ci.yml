@@ -1,25 +1,18 @@
 name: ci
-on:
-  push:
-    branches:
-      - master
+on: push
 jobs:
-  saas-build:
-    runs-on: ubuntu-latest 
-    permissions:
-      contents: write
-      actions: write
-      packages: write
-      attestations: write
-      id-token: write
-    env:
-        TAG: $((${{ github.run_number }}+3000))
-        VER: ${{ github.run_number }}
+  build-test:
+    runs-on: ubuntu-latest
     steps:
-    - name: test
+    - name: Set up Go 1.23
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.23
+    - name: Copy Repo Files dd
       uses: actions/checkout@v2
-
-    - name: Set git tag
-      run: |
-        echo "TAG=${TAG}, $(($VER+3000))"
-
+    - name: Build
+      run: go build -v ./app
+    
+    - name: Test
+      run: go test ./... -v
+    
