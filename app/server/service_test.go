@@ -1,6 +1,7 @@
 package server
 
 import (
+	"embed"
 	"os"
 	"testing"
 
@@ -15,7 +16,8 @@ func TestNewService(t *testing.T) {
 	assert.NoError(t, err, "Failed to create cache directory")
 	defer os.RemoveAll(cacheDir)
 
-	service := NewService(nil, cacheDir)
+	var efs embed.FS
+	service := NewService(nil, cacheDir, efs)
 
 	assert.NotNil(t, service, "Expected service to be initialized")
 	assert.Equal(t, cacheDir, service.cacheDir, "Expected cacheDir to be set correctly")
@@ -30,12 +32,13 @@ func TestGenerateNginxConfig(t *testing.T) {
 	assert.NoError(t, err, "Failed to create cache directory")
 	// defer os.RemoveAll(cacheDir)
 
-	service := NewService(nil, cacheDir)
+	var efs embed.FS
+	service := NewService(nil, cacheDir, efs)
 	domain := "example.com"
 	os.Mkdir(cacheDir+"/"+domain, 0755) //room to save config file
 
 	// Generate nginx.conf for the domain
-	err = service.generateNginxConfig(domain, "../ui/templates/configs/nginx.tmpl")
+	err = service.generateNginxConfig(domain, "../ui/configs/nginx.tmpl")
 	assert.NoError(t, err, "Failed to generate nginx.conf")
 
 }

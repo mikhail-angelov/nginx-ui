@@ -1,6 +1,7 @@
 package server
 
 import (
+	"embed"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,17 +10,25 @@ import (
 const IS_AUTH = true
 
 type Web struct {
-	router  *router
+	router  *Router
 	nginx   *nginx
 	service *Service
+	email   string
+	pass    string
+	embedFs embed.FS
 }
 
-func NewWeb(nginx *nginx, service *Service) *Web {
-	web := &Web{}
-	web.nginx = nginx
-	web.service = service
-	web.router = NewRouter()
-	templates := LoadTemplates()
+func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs embed.FS) *Web {
+	web := &Web{
+		router:  NewRouter(embedFs),
+		nginx:   nginx,
+		service: service,
+		email:   email,
+		pass:    pass,
+		embedFs: embedFs,
+	}
+
+	templates := LoadTemplates(embedFs)
 
 	web.router.GET(IS_AUTH, "/test/:id", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.Context().Value(ContextKey("id"))) // logs the first path parameter
@@ -64,10 +73,9 @@ func NewWeb(nginx *nginx, service *Service) *Web {
 		templates.SubRender(w, "index", "configs", data)
 
 	})
-	web.router.GET(IS_AUTH, "/edit/:file", func(w http.ResponseWriter, r *http.Request) {
+	web.router.GET(IS_AUTH, "/edit/{path}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		path := r.Context().Value(ContextKey("path")).(map[string]string)
-		name := path["file"]
+		name := r.PathValue("path")
 
 		content, err := nginx.GetConfig(name)
 		if err != nil {
@@ -111,10 +119,9 @@ func NewWeb(nginx *nginx, service *Service) *Web {
 		w.Header().Set("HX-Trigger", "refreshConfigs")
 		templates.SubRender(w, "index", "editor", data)
 	})
-	web.router.POST(IS_AUTH, "/validate/:file", func(w http.ResponseWriter, r *http.Request) {
+	web.router.POST(IS_AUTH, "/validate/{file}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		path := r.Context().Value(ContextKey("path")).(map[string]string)
-		name := path["file"]
+		name := r.PathValue("path")
 		content := r.FormValue("content")
 		err := nginx.CheckNewConfig(name, content)
 		status := "valid"
@@ -130,10 +137,9 @@ func NewWeb(nginx *nginx, service *Service) *Web {
 
 		templates.SubRender(w, "index", "status", data)
 	})
-	web.router.POST(IS_AUTH, "/save/:file", func(w http.ResponseWriter, r *http.Request) {
+	web.router.POST(IS_AUTH, "/save/{file}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		path := r.Context().Value(ContextKey("path")).(map[string]string)
-		name := path["file"]
+		name := r.PathValue("path")
 		content := r.FormValue("content")
 		err := nginx.SetConfig(name, content)
 		status := "valid"
@@ -149,10 +155,9 @@ func NewWeb(nginx *nginx, service *Service) *Web {
 
 		templates.SubRender(w, "index", "status", data)
 	})
-	web.router.POST(IS_AUTH, "/remove/:name", func(w http.ResponseWriter, r *http.Request) {
+	web.router.POST(IS_AUTH, "/remove/{path}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		path := r.Context().Value(ContextKey("path")).(map[string]string)
-		name := path["name"]
+		name := r.PathValue("path")
 		err := service.RemoveDomain(name)
 		if err != nil {
 			error = err.Error()
@@ -172,12 +177,12 @@ func NewWeb(nginx *nginx, service *Service) *Web {
 
 	web.router.POST(false, "/login", func(w http.ResponseWriter, r *http.Request) {
 		//validate email and password
-		email := r.FormValue("email")
+		userEmail := r.FormValue("email")
 		password := r.FormValue("password")
 		data := make(map[string]interface{})
 		fmt.Println(email + ":" + password)
 		error := ""
-		if password == "" {
+		if password != pass || email != userEmail {
 			data["IsAuth"] = false
 			data["Error"] = "Password is required"
 			templates.SubRender(w, "index", "login", data)
@@ -202,6 +207,7 @@ func NewWeb(nginx *nginx, service *Service) *Web {
 	return web
 }
 
-func (w *Web) GetRouter() *router {
-	return w.router
+// GetRouter returns the underlying http.ServeMux
+func (web *Web) GetRouter() *http.ServeMux {
+	return web.router.mux
 }

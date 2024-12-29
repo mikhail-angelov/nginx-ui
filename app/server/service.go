@@ -1,8 +1,10 @@
 package server
 
 import (
+	"embed"
 	"errors"
 	"html/template"
+	"io/fs"
 	"log"
 	"net"
 	"os"
@@ -20,9 +22,10 @@ type Service struct {
 	cacheDir string
 	domains  []string
 	cert     *Cert
+	embedFs  embed.FS
 }
 
-func NewService(cert *Cert, cacheDir string) *Service {
+func NewService(cert *Cert, cacheDir string, embedFs embed.FS) *Service {
 	_, err := os.Stat(cacheDir)
 	if os.IsNotExist(err) {
 		panic("Cache directory does not exist")
@@ -34,7 +37,7 @@ func NewService(cert *Cert, cacheDir string) *Service {
 		panic("Failed to get directories")
 	}
 
-	service := &Service{cert: cert, cacheDir: cacheDir, domains: domains}
+	service := &Service{cert: cert, cacheDir: cacheDir, domains: domains, embedFs: embedFs}
 	go func() {
 		for {
 			service.checkAndRefreshCertificates()
@@ -66,7 +69,7 @@ func (s *Service) AddDomain(domain string) error {
 	}
 
 	// Generate nginx.conf for the new domain
-	templatePaths, err := filepath.Glob("ui/templates/configs/nginx.tmpl")
+	templatePaths, err := fs.Glob(s.embedFs, "ui/configs/nginx.tmpl")
 	if err != nil || len(templatePaths) == 0 {
 		return errors.New("template file not found")
 	}

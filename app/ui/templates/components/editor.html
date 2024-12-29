@@ -5,17 +5,21 @@
     style="display: flex; align-items: center; justify-content: space-between"
   >
     <div style="display: flex; align-items: center">
-      <h4 style="margin: 0">{{.Name}}</h4>
-      <div
-        id="status"
-        class="flex items-center justify-center"
-      >
-        {{ template "status" . }}
-      </div>
+      <h4 style="margin: 0; margin-right: 10px">{{.Name}}</h4>
+      <div id="status">{{ template "status" . }}</div>
+    </div>
+
+    <div class="flex align-center">
       <button id="validate" class="outline btn-sm" style="margin: 8px">
         Validate
       </button>
-      <button id="save" class="outline btn-sm" style="margin: 8px;color: green">Save</button>
+      <button
+        id="save"
+        class="outline btn-sm"
+        style="margin: 8px; color: green"
+      >
+        Save
+      </button>
       <button
         class="outline btn-sm"
         style="margin: 8px; color: red"
@@ -27,27 +31,18 @@
         Remove
       </button>
     </div>
-
-    <button
-      class="outline btn-sm"
-      hx-get="/add-config-modal"
-      hx-target="body"
-      hx-swap="beforeend"
-    >
-      +Add
-    </button>
   </div>
   <div class="monaco" style="flex: 1"></div>
 </form>
 
 <script type="module">
   // import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.39.0/+esm';
-  import * as monaco from "/js/monaco-editor.js";
+  import * as monaco from "/static/js/monaco-editor.js";
   import {
     tokenConf,
     themeConfig,
     themeDarkConfig,
-  } from "/js/monaco-nginx-plugin.js";
+  } from "/static/js/monaco-nginx-plugin.js";
 
   monaco.languages.register({ id: "nginx" });
   monaco.languages.setLanguageConfiguration("nginx", {

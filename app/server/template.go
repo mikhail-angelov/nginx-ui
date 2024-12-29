@@ -1,8 +1,10 @@
 package server
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -39,14 +41,14 @@ func (t *Template) SubRender(w http.ResponseWriter, name string, component strin
 	return e
 }
 
-func LoadTemplates() *Template {
+func LoadTemplates(embedFs embed.FS) *Template {
 	templates := make(map[string]*template.Template)
-	layoutFiles, err := filepath.Glob("ui/templates/components/*.html")
+	layoutFiles, err := fs.Glob(embedFs, "ui/templates/components/*.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	includeFiles, err := filepath.Glob("ui/templates/pages/*.html")
+	includeFiles, err := fs.Glob(embedFs, "ui/templates/pages/*.html")
 	if err != nil {
 		log.Fatal(err)
 	}
