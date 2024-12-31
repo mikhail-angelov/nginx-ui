@@ -16,7 +16,7 @@ var embedFs embed.FS
 const IS_AUTH = true
 
 func main() {
-	isDev := flag.Bool("d", true, "a bool")
+	isDev := flag.Bool("dev", false, "a bool")
 	configDir := flag.String("configDir", "temp", "Directory for storing configuration files")
 	email := flag.String("email", "test@test.com", "Email address for auth and certificate registration")
 	pass := flag.String("pass", "1", "password for auth")

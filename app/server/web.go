@@ -3,6 +3,7 @@ package server
 import (
 	"embed"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -28,7 +29,7 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 		embedFs: embedFs,
 	}
 
-	templates := LoadTemplates(embedFs)
+	templates := NewTemplate(embedFs)
 
 	web.router.GET(IS_AUTH, "/test/:id", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.Context().Value(ContextKey("id"))) // logs the first path parameter
@@ -73,9 +74,9 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 		templates.SubRender(w, "index", "configs", data)
 
 	})
-	web.router.GET(IS_AUTH, "/edit/{path}", func(w http.ResponseWriter, r *http.Request) {
+	web.router.GET(IS_AUTH, "/edit/{domain}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		name := r.PathValue("path")
+		name := r.PathValue("domain")
 
 		content, err := nginx.GetConfig(name)
 		if err != nil {
@@ -107,6 +108,7 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 		}
 		err := service.AddDomain(name)
 		if err != nil {
+			log.Printf("Failed to add domain %s: %v", name, err)
 			error = err.Error()
 		}
 		configs := service.GetDomains()
@@ -119,13 +121,14 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 		w.Header().Set("HX-Trigger", "refreshConfigs")
 		templates.SubRender(w, "index", "editor", data)
 	})
-	web.router.POST(IS_AUTH, "/validate/{file}", func(w http.ResponseWriter, r *http.Request) {
+	web.router.POST(IS_AUTH, "/validate/{domain}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		name := r.PathValue("path")
+		name := r.PathValue("domain")
 		content := r.FormValue("content")
 		err := nginx.CheckNewConfig(name, content)
 		status := "valid"
 		if err != nil {
+			log.Printf("Failed to validate config %s: %v", name, err)
 			error = err.Error()
 			status = "invalid"
 		}
@@ -137,13 +140,14 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 
 		templates.SubRender(w, "index", "status", data)
 	})
-	web.router.POST(IS_AUTH, "/save/{file}", func(w http.ResponseWriter, r *http.Request) {
+	web.router.POST(IS_AUTH, "/save/{domain}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		name := r.PathValue("path")
+		name := r.PathValue("domain")
 		content := r.FormValue("content")
 		err := nginx.SetConfig(name, content)
 		status := "valid"
 		if err != nil {
+			log.Printf("Failed to save config %s: %v", name, err)	
 			error = err.Error()
 			status = "invalid"
 		}
@@ -155,11 +159,12 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 
 		templates.SubRender(w, "index", "status", data)
 	})
-	web.router.POST(IS_AUTH, "/remove/{path}", func(w http.ResponseWriter, r *http.Request) {
+	web.router.POST(IS_AUTH, "/remove/{domain}", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
-		name := r.PathValue("path")
+		name := r.PathValue("domain")
 		err := service.RemoveDomain(name)
 		if err != nil {
+			log.Printf("Failed to remove domain %s: %v", name, err)
 			error = err.Error()
 		}
 

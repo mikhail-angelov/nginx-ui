@@ -91,6 +91,7 @@ func (s *Service) RemoveDomain(domain string) error {
 
 	err := os.RemoveAll(s.cacheDir + "/" + domain)
 	if err != nil {
+		log.Printf("Failed to remove directory %s: %v", domain, err)
 		return err
 	}
 
@@ -101,7 +102,7 @@ func (s *Service) RemoveDomain(domain string) error {
 
 func (s *Service) checkAndRefreshCertificates() {
 	for _, domain := range s.domains {
-		certPath := s.cacheDir + "/" + domain + "/cert.pem"
+		certPath := s.cacheDir + "/" + domain + "/fullchain.pem"
 		expirationTime := GetExpireTime(certPath)
 		if expirationTime == nil || expirationTime.Sub(time.Now().UTC()).Hours() < 72 {
 			log.Printf("Certificate for %s is expired or will expire soon, refreshing...", domain)
@@ -123,14 +124,16 @@ func (s *Service) checkAndRefreshCertificates() {
 }
 
 func (s *Service) generateNginxConfig(domain string, templatePath string) error {
-	tmpl, err := template.ParseFiles(templatePath)
+	tmpl, err := template.ParseFS(s.embedFs, templatePath)
 	if err != nil {
+		log.Printf("Failed to parse template %s: %v", templatePath, err)
 		return err
 	}
 
 	outputPath := filepath.Join(s.cacheDir, domain, "nginx.conf")
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
+		log.Printf("Failed to create file %s: %v", outputPath, err)
 		return err
 	}
 	defer outputFile.Close()
@@ -146,6 +149,7 @@ func (s *Service) generateNginxConfig(domain string, templatePath string) error 
 	}
 	err = tmpl.Execute(outputFile, data)
 	if err != nil {
+		log.Printf("Failed to execute template %s, %s: %v", domain, templatePath, err)
 		return err
 	}
 
@@ -155,6 +159,7 @@ func (s *Service) generateNginxConfig(domain string, templatePath string) error 
 func getDirectories(dir string) ([]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
+		log.Printf("Failed to read directory %s: %v", dir, err)
 		return nil, err
 	}
 
@@ -193,5 +198,9 @@ func isValidDomain(domain string) bool {
 }
 func isDomainResolvable(domain string) bool {
 	_, err := net.LookupHost(domain)
-	return err == nil
+	if err != nil {
+		log.Printf("Failed to resolve domain %s: %v", domain, err)
+		return false
+	}
+	return true
 }

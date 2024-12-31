@@ -15,6 +15,15 @@ type Template struct {
 	templates map[string]*template.Template
 }
 
+// NewTemplate creates a new Template instance
+func NewTemplate(embedFs embed.FS) *Template {
+	t := &Template{
+		templates: make(map[string]*template.Template),
+	}
+	t.loadTemplates(embedFs)
+	return t
+}
+
 func (t *Template) Render(w http.ResponseWriter, name string, data interface{}) error {
 	tmpl, ok := t.templates[name]
 	if !ok {
@@ -41,36 +50,22 @@ func (t *Template) SubRender(w http.ResponseWriter, name string, component strin
 	return e
 }
 
-func LoadTemplates(embedFs embed.FS) *Template {
-	templates := make(map[string]*template.Template)
+func (t *Template) loadTemplates(embedFs embed.FS) {
+	// templates := make(map[string]*template.Template)
 	layoutFiles, err := fs.Glob(embedFs, "ui/templates/components/*.html")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to load components templates: %v", err)
 	}
-
 	includeFiles, err := fs.Glob(embedFs, "ui/templates/pages/*.html")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to load page templates: %v", err)
 	}
 
-	mainTemplate := template.New("main")
-
-	if err != nil {
-		log.Fatal(err)
-	}
 	for _, file := range includeFiles {
-		fileName := strings.TrimSuffix(filepath.Base(file), ".html")
 		files := append(layoutFiles, file)
-		templates[fileName], err = mainTemplate.Clone()
-		if err != nil {
-			log.Fatal(err)
-		}
-		templates[fileName] = template.Must(templates[fileName].ParseFiles(files...))
+		tmpl := template.Must(template.ParseFS(embedFs, files...))
+		name := strings.TrimSuffix(filepath.Base(file), ".html")
+		t.templates[name] = tmpl
 	}
-
 	log.Println("templates loading successful")
-	t := &Template{
-		templates: templates,
-	}
-	return t
 }

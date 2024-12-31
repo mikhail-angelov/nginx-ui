@@ -23,7 +23,7 @@ func NewCert(cacheDir string, email string, isDebug bool) *Cert {
 	certManager := &autocert.Manager{
 		// HostPolicy: autocert.HostWhitelist(domains...), // no need white list, accept all domains
 		Prompt: autocert.AcceptTOS,
-		Cache:  autocert.DirCache(cacheDir),
+		Cache:  autocert.DirCache(cacheDir+"/certs"),
 		Email:  email,
 	}
 	if isDebug {
@@ -81,7 +81,7 @@ func (c *Cert) GetCertificate(domain string, cacheDir string) error {
 func GetExpireTime(file string) *time.Time {
 	certData, err := os.ReadFile(file)
 	if err != nil {
-		log.Printf("[Cert]: failed to read Cert.pem from disk: %v", err)
+		log.Printf("[Cert]: failed to read %s from disk: %v", file, err)
 		return nil
 	}
 

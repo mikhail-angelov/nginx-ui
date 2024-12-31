@@ -24,15 +24,17 @@ func (n *nginx) getFullName(domain string) string {
 	return n.rootPath + "/conf/" + domain + "/nginx.conf"
 }
 func (n *nginx) runNginxCommand(args []string) string {
-	executable := "docker"
-	args = append([]string{"exec", "-t", "nginx", "nginx"}, args...)
+	// executable := "docker"
+	// args = append([]string{"exec", "-t", "nginx", "nginx"}, args...)
+	executable := "nginx"
 	
 	cmd := exec.Command(executable, args...)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("certbot error: %v\n", err)
+		log.Printf("nginx run command error: %v\n", err)
 		return ""
 	}
+	log.Printf("nginx run command output: %v\n", string(stdoutStderr))
 	return string(stdoutStderr)
 }
 
