@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "app/main.go",
-            "args": ["-dev"],
+            "args": ["-dev","-docker"],
         }
     ]
 }

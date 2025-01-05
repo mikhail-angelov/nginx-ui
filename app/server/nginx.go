@@ -11,10 +11,11 @@ import (
 type nginx struct {
 	rootPath string
 	isDev    bool
+	isDocker bool
 }
 
-func NewNginx(rootPath string, isDev bool) *nginx {
-	return &nginx{rootPath: rootPath, isDev: isDev}
+func NewNginx(rootPath string, isDev bool, isDocker bool) *nginx {
+	return &nginx{rootPath: rootPath, isDev: isDev, isDocker: isDocker}
 }
 
 func (n *nginx) getFullName(domain string) string {
@@ -24,10 +25,11 @@ func (n *nginx) getFullName(domain string) string {
 	return n.rootPath + "/conf/" + domain + "/nginx.conf"
 }
 func (n *nginx) runNginxCommand(args []string) string {
-	// executable := "docker"
-	// args = append([]string{"exec", "-t", "nginx", "nginx"}, args...)
 	executable := "nginx"
-	
+	if n.isDocker {
+		executable = "docker"
+		args = append([]string{"exec", "-t", "nginx", "nginx"}, args...)
+	}
 	cmd := exec.Command(executable, args...)
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {

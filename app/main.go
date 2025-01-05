@@ -17,6 +17,7 @@ const IS_AUTH = true
 
 func main() {
 	isDev := flag.Bool("dev", false, "a bool")
+	isDocker := flag.Bool("docker", false, "a bool")
 	configDir := flag.String("configDir", "temp", "Directory for storing configuration files")
 	email := flag.String("email", "test@test.com", "Email address for auth and certificate registration")
 	pass := flag.String("pass", "1", "password for auth")
@@ -24,7 +25,7 @@ func main() {
 
 	flag.Parse()
 	cert := server.NewCert("certs", *email, *isDev)
-	nginx := server.NewNginx(*configDir, *isDev)
+	nginx := server.NewNginx(*configDir, *isDev, *isDocker)
 	service := server.NewService(cert, *configDir+"/conf", embedFs)
 	web := server.NewWeb(nginx, service, *email, *pass, embedFs)
 

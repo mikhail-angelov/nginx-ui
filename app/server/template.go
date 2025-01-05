@@ -51,7 +51,6 @@ func (t *Template) SubRender(w http.ResponseWriter, name string, component strin
 }
 
 func (t *Template) loadTemplates(embedFs embed.FS) {
-	// templates := make(map[string]*template.Template)
 	layoutFiles, err := fs.Glob(embedFs, "ui/templates/components/*.html")
 	if err != nil {
 		log.Fatalf("failed to load components templates: %v", err)

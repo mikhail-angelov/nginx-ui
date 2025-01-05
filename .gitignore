@@ -27,4 +27,5 @@ go.work.sum
 build
 __debug*
 temp
-nginx-ui
+dist
+certs
