@@ -33,8 +33,7 @@ func NewService(cert *Cert, cacheDir string, embedFs embed.FS) *Service {
 
 	domains, err := getDirectories(cacheDir)
 	if err != nil {
-		log.Fatalf("Failed to get directories: %v", err)
-		panic("Failed to get directories")
+		log.Panicf("Failed to get directories: %v", err)
 	}
 
 	service := &Service{cert: cert, cacheDir: cacheDir, domains: domains, embedFs: embedFs}

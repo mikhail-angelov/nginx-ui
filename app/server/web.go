@@ -19,13 +19,13 @@ type Web struct {
 	embedFs embed.FS
 }
 
-func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs embed.FS) *Web {
+func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *Web {
 	web := &Web{
 		router:  NewRouter(embedFs),
 		nginx:   nginx,
 		service: service,
-		email:   email,
-		pass:    pass,
+		email:   config.Email,
+		pass:    config.Pass,
 		embedFs: embedFs,
 	}
 
@@ -147,7 +147,7 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 		err := nginx.SetConfig(name, content)
 		status := "valid"
 		if err != nil {
-			log.Printf("Failed to save config %s: %v", name, err)	
+			log.Printf("Failed to save config %s: %v", name, err)
 			error = err.Error()
 			status = "invalid"
 		}
@@ -185,9 +185,9 @@ func NewWeb(nginx *nginx, service *Service, email string, pass string, embedFs e
 		userEmail := r.FormValue("email")
 		password := r.FormValue("password")
 		data := make(map[string]interface{})
-		fmt.Println(email + ":" + password)
+		fmt.Println(config.Email + ":" + password)
 		error := ""
-		if password != pass || email != userEmail {
+		if password != config.Pass || config.Email != userEmail {
 			data["IsAuth"] = false
 			data["Error"] = "Password is required"
 			templates.SubRender(w, "index", "login", data)

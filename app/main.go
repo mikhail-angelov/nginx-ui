@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -13,26 +12,18 @@ import (
 //go:embed ui/*
 var embedFs embed.FS
 
-const IS_AUTH = true
-
 func main() {
-	isDev := flag.Bool("dev", false, "a bool")
-	isDocker := flag.Bool("docker", false, "a bool")
-	configDir := flag.String("configDir", "temp", "Directory for storing configuration files")
-	email := flag.String("email", "test@test.com", "Email address for auth and certificate registration")
-	pass := flag.String("pass", "1", "password for auth")
-	port := flag.String("port", "3005", "http port")
+	config := server.LoadConfig()
 
-	flag.Parse()
-	cert := server.NewCert("certs", *email, *isDev)
-	nginx := server.NewNginx(*configDir, *isDev, *isDocker)
-	service := server.NewService(cert, *configDir+"/conf", embedFs)
-	web := server.NewWeb(nginx, service, *email, *pass, embedFs)
+	cert := server.NewCert("certs", config)
+	nginx := server.NewNginx(config)
+	service := server.NewService(cert, config.ConfigDir+"/conf", embedFs)
+	web := server.NewWeb(nginx, service, config, embedFs)
 
-	log.Printf("Server started on :%s port ✅", *port)
+	log.Printf("Server started on :%s port ✅", config.Port)
 	// make sure to use the cert manager's HTTP handler is expose on 80 port for http-01 challenge
 	// .well-known/acme-challenge ... path
-	log.Fatal(http.ListenAndServe(":"+*port, cert.GetCertManager().HTTPHandler(web.GetRouter())))
+	log.Panic(http.ListenAndServe(":"+config.Port, cert.GetCertManager().HTTPHandler(web.GetRouter())))
 
 	os.Exit(1)
 }

@@ -1,5 +1,20 @@
 # nginx-ui
 nginx-ui
 
-## build
-`go build -o nginx-ui ./nginx-ui -configDir=./app/temp -d=true -email=your-email@example.com -pass=1234 -port=3005`
+
+todo
+
+-on add domain
+- all checks
+- add folder
+- gen certificates first
+- add config
+- add spinner in UI
+- save only if config valid
+- reload nginx config
+
+-on edit
+- show spinner on load long js file
+
+-on save
+- never save invalid config on server

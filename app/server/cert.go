@@ -19,14 +19,14 @@ type Cert struct {
 	certManager *autocert.Manager
 }
 
-func NewCert(cacheDir string, email string, isDebug bool) *Cert {
+func NewCert(cacheDir string, config *Config) *Cert {
 	certManager := &autocert.Manager{
 		// HostPolicy: autocert.HostWhitelist(domains...), // no need white list, accept all domains
 		Prompt: autocert.AcceptTOS,
-		Cache:  autocert.DirCache(cacheDir+"/certs"),
-		Email:  email,
+		Cache:  autocert.DirCache(cacheDir + "/certs"),
+		Email:  config.Email,
 	}
-	if isDebug {
+	if config.IsDev {
 		certManager.Client = &acme.Client{
 			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
 		}

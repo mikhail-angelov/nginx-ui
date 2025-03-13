@@ -14,8 +14,8 @@ type nginx struct {
 	isDocker bool
 }
 
-func NewNginx(rootPath string, isDev bool, isDocker bool) *nginx {
-	return &nginx{rootPath: rootPath, isDev: isDev, isDocker: isDocker}
+func NewNginx(config *Config) *nginx {
+	return &nginx{rootPath: config.ConfigDir, isDev: config.IsDev, isDocker: config.IsDocker}
 }
 
 func (n *nginx) getFullName(domain string) string {
