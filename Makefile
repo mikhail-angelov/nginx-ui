@@ -46,6 +46,8 @@ initial-deploy: build install-nginx install-supervisor
 	@echo "Initial deploying Nginx UI to $(REMOTE_HOST) is done. ✅"
 	
 deploy:
+	ssh ${REMOTE_HOST} "supervisorctl stop ngx"
 	scp -r dist/nginx-ui ${REMOTE_HOST}:/opt/ngx
+	ssh ${REMOTE_HOST} "supervisorctl start ngx"
 
 .PHONY: build build-local run-local initial-deploy install-nginx install-supervisor deploy

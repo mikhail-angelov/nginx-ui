@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,10 +15,15 @@ import (
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
+type ICertManager interface {
+	GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error)
+	HTTPHandler(fallback http.Handler) http.Handler
+}
 
 type Cert struct {
-	certManager *autocert.Manager
+	cm ICertManager
 }
+
 
 func NewCert(cacheDir string, config *Config) *Cert {
 	certManager := &autocert.Manager{
@@ -31,15 +37,15 @@ func NewCert(cacheDir string, config *Config) *Cert {
 			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
 		}
 	}
-	return &Cert{certManager: certManager}
+	return &Cert{cm: certManager}
 }
 
-func (c *Cert) GetCertManager() *autocert.Manager {
-	return c.certManager
+func (c *Cert) GetCertManager() ICertManager {
+	return c.cm
 }
 
 func (c *Cert) GetCertificate(domain string, cacheDir string) error {
-	cert, err := c.certManager.GetCertificate(&tls.ClientHelloInfo{ServerName: domain})
+	cert, err := c.cm.GetCertificate(&tls.ClientHelloInfo{ServerName: domain})
 	if err != nil {
 		// http.Error(w, "Failed to get certificate", http.StatusInternalServerError)
 		log.Printf("Failed to get certificate: %s:%v", domain, err)
@@ -65,10 +71,14 @@ func (c *Cert) GetCertificate(domain string, cacheDir string) error {
 		return err
 	}
 
-	// Write the chain to a separate file
+	// Write the chain to a separate file, and append it to the fullchain
 	if len(cert.Certificate) > 1 {
 		chainPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Certificate[1]})
 		err = os.WriteFile(chainPath, chainPEM, 0644)
+		if err != nil {
+			return err
+		}
+		err = os.WriteFile(fullchainPath, append(fullchainPEM, chainPEM...), 0644)
 		if err != nil {
 			return err
 		}
