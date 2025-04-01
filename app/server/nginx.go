@@ -69,5 +69,20 @@ func (n *nginx) GetConfig(name string) (string, error) {
 
 func (n *nginx) SetConfig(name string, content string) error {
 	fullPath := n.getFullName(name)
-	return os.WriteFile(fullPath, []byte(content), 0644)
+	err := os.WriteFile(fullPath, []byte(content), 0644)
+	if err != nil {
+		log.Printf("Failed to write config %s: %v", fullPath, err)
+		return err
+	}
+	n.RefreshConfig()
+	return nil
+}
+
+func (n *nginx) RefreshConfig()  {
+	log.Println("reloading nginx config")
+	status := n.runNginxCommand([]string{"-t"})
+	if strings.Contains(status, "syntax is ok") {
+		n.runNginxCommand([]string{"-s", "reload"})
+		log.Println("nginx config is reloaded")
+	}
 }

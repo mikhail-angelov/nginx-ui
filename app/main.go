@@ -17,7 +17,7 @@ func main() {
 
 	cert := server.NewCert("certs", config)
 	nginx := server.NewNginx(config)
-	service := server.NewService(cert, config.ConfigDir+"/conf", embedFs)
+	service := server.NewService(nginx, cert, config.ConfigDir+"/conf", embedFs)
 	web := server.NewWeb(nginx, service, config, embedFs)
 
 	log.Printf("Server started on :%s port ✅", config.Port)

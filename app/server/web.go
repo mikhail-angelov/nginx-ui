@@ -2,7 +2,6 @@ package server
 
 import (
 	"embed"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -32,7 +31,7 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 	templates := NewTemplate(embedFs)
 
 	web.router.GET(IS_AUTH, "/test/:id", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.Context().Value(ContextKey("id"))) // logs the first path parameter
+		log.Printf("test id - %s", r.Context().Value(ContextKey("id")))
 
 		data := map[string]interface{}{
 			"Name": r.Context().Value(ContextKey("id")),
@@ -43,7 +42,6 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 	web.router.GET(IS_AUTH, "/", func(w http.ResponseWriter, r *http.Request) {
 		data := make(map[string]interface{})
 		claim := r.Context().Value(ContextKey("claims"))
-		fmt.Println(claim)
 		error := ""
 		if claim == nil {
 			data["IsAuth"] = false
@@ -60,7 +58,6 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 	web.router.GET(IS_AUTH, "/configs", func(w http.ResponseWriter, r *http.Request) {
 		data := make(map[string]interface{})
 		claim := r.Context().Value(ContextKey("claims"))
-		fmt.Println(claim)
 		error := ""
 		if claim == nil {
 			data["IsAuth"] = false
@@ -182,14 +179,15 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 
 	web.router.POST(false, "/login", func(w http.ResponseWriter, r *http.Request) {
 		//validate email and password
-		userEmail := r.FormValue("email")
+		email := r.FormValue("email")
 		password := r.FormValue("password")
 		data := make(map[string]interface{})
-		fmt.Println(config.Email + ":" + password)
+		log.Printf("Authorizing as %s", email)
 		error := ""
-		if password != config.Pass || config.Email != userEmail {
+		if password != config.Pass || config.Email != email {
 			data["IsAuth"] = false
 			data["Error"] = "Password is required"
+			log.Printf("Login is invalid %s:%s", email, password)
 			templates.SubRender(w, "index", "login", data)
 		} else {
 			configs := service.GetDomains()

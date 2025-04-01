@@ -22,10 +22,11 @@ type Service struct {
 	cacheDir string
 	domains  []string
 	cert     *Cert
+	nginx   *nginx
 	embedFs  embed.FS
 }
 
-func NewService(cert *Cert, cacheDir string, embedFs embed.FS) *Service {
+func NewService(nginx *nginx, cert *Cert, cacheDir string, embedFs embed.FS) *Service {
 	_, err := os.Stat(cacheDir)
 	if os.IsNotExist(err) {
 		panic("Cache directory does not exist")
@@ -36,7 +37,7 @@ func NewService(cert *Cert, cacheDir string, embedFs embed.FS) *Service {
 		log.Panicf("Failed to get directories: %v", err)
 	}
 
-	service := &Service{cert: cert, cacheDir: cacheDir, domains: domains, embedFs: embedFs}
+	service := &Service{nginx: nginx, cert: cert, cacheDir: cacheDir, domains: domains, embedFs: embedFs}
 	go func() {
 		for {
 			service.checkAndRefreshCertificates()
@@ -100,10 +101,11 @@ func (s *Service) RemoveDomain(domain string) error {
 }
 
 func (s *Service) checkAndRefreshCertificates() {
+	isRefreshedCertificates := false
 	for _, domain := range s.domains {
 		certPath := s.cacheDir + "/" + domain + "/fullchain.pem"
 		expirationTime := GetExpireTime(certPath)
-		if expirationTime == nil || expirationTime.Sub(time.Now().UTC()).Hours() < 72 {
+		if expirationTime == nil || expirationTime.Sub(time.Now().UTC()).Hours() < (7 * 24) {
 			log.Printf("Certificate for %s is expired or will expire soon, refreshing...", domain)
 
 			isValid := isDomainResolvable(domain)
@@ -113,12 +115,16 @@ func (s *Service) checkAndRefreshCertificates() {
 			}
 
 			err := s.cert.GetCertificate(domain, s.cacheDir+"/"+domain)
+			isRefreshedCertificates = true
 			if err != nil {
 				log.Printf("Failed to get certificate for %s: %v", domain, err)
 			}
 		} else {
 			log.Printf("Certificate for %s is still valid", domain)
 		}
+	}
+	if isRefreshedCertificates {
+		s.nginx.RefreshConfig()
 	}
 }
 
