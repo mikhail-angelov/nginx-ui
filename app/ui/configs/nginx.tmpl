@@ -2,9 +2,9 @@ server {
     listen   443 ssl;
     server_name {{.Domain}};
 
-    ssl_certificate        {{.Path}}/fullchain.pem;
-    ssl_certificate_key    {{.Path}}/privkey.pem;
-    ssl_trusted_certificate {{.Path}}/chain.pem;
+    #ssl_certificate        {{.Path}}/fullchain.pem;
+    #ssl_certificate_key    {{.Path}}/privkey.pem;
+    #ssl_trusted_certificate {{.Path}}/chain.pem;
     add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";
 
     client_max_body_size 12m;
@@ -12,11 +12,14 @@ server {
 
     location / {
         proxy_pass {{.Backend}};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host $http_host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header x-trace-id $request_id;
+        proxy_set_header x-trace-id $request_id;
     }
 
 }

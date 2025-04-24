@@ -91,10 +91,10 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 		templates.SubRender(w, "index", "editor", data)
 	})
 
-	web.router.GET(IS_AUTH, "/add-config-modal", func(w http.ResponseWriter, r *http.Request) {
-
-		templates.SubRender(w, "index", "addConfigModal", nil)
+	web.router.GET(IS_AUTH, "/add-config-panel", func(w http.ResponseWriter, r *http.Request) {
+		templates.SubRender(w, "index", "addConfig", nil)
 	})
+
 	web.router.POST(IS_AUTH, "/add-config", func(w http.ResponseWriter, r *http.Request) {
 		error := ""
 
@@ -103,7 +103,8 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 		if name == "" {
 			name = now.Format("2024-10-01-15-04-05")
 		}
-		err := service.AddDomain(name)
+
+		err, content := service.AddDomain(name)
 		if err != nil {
 			log.Printf("Failed to add domain %s: %v", name, err)
 			error = err.Error()
@@ -112,7 +113,7 @@ func NewWeb(nginx *nginx, service *Service, config *Config, embedFs embed.FS) *W
 		data := map[string]interface{}{
 			"Configs": configs,
 			"Name":    name,
-			"Content": "",
+			"Content": content,
 			"Error":   error,
 		}
 		w.Header().Set("HX-Trigger", "refreshConfigs")

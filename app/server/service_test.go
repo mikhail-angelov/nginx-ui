@@ -21,7 +21,7 @@ func TestNewService(t *testing.T) {
 	defer os.RemoveAll(cacheDir)
 
 	var efs embed.FS
-	service := NewService(nil, nil, cacheDir, efs)
+	service := NewService(nil, nil, config, efs)
 
 	assert.NotNil(t, service, "Expected service to be initialized")
 	assert.Equal(t, cacheDir, service.cacheDir, "Expected cacheDir to be set correctly")

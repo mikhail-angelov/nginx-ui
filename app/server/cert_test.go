@@ -39,17 +39,12 @@ func (m *MockCertManager) HTTPHandler(fallback http.Handler) http.Handler {
 }
 
 func TestNewCert(t *testing.T) {
-	cacheDir := t.TempDir()
-
-	cert := NewCert(cacheDir, config)
-
+	cert := NewCert(config)
 	assert.NotNil(t, cert.cm, "Expected certManager to be initialized")
 }
 
 func TestGetCertManager(t *testing.T) {
-	cacheDir := t.TempDir()
-
-	cert := NewCert(cacheDir, config)
+	cert := NewCert(config)
 	manager := cert.GetCertManager()
 
 	assert.Equal(t, cert.cm, manager, "Expected GetCertManager to return certManager")

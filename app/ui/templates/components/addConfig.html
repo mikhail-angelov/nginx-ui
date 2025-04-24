@@ -1,0 +1,19 @@
+{{define "addConfig"}}
+
+<div>
+  <form
+    hx-post="/add-config"
+    hx-target="#content"
+    hx-swap="outerHTML"
+    hx-indicator="#spinner"
+  >
+    <label for="name">Enter a name for the new domain:</label>
+    <input type="text" id="name" name="name" required />
+    <footer class="flex">
+      <button type="submit" class="contrast">Add</button>
+    </footer>
+  </form>
+  {{template "spinner" .}}
+</div>
+
+{{end}}

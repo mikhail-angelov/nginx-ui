@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -22,11 +23,13 @@ type Service struct {
 	cacheDir string
 	domains  []string
 	cert     *Cert
-	nginx   *nginx
+	nginx    *nginx
+	isDev    bool
 	embedFs  embed.FS
 }
 
-func NewService(nginx *nginx, cert *Cert, cacheDir string, embedFs embed.FS) *Service {
+func NewService(nginx *nginx, cert *Cert, config *Config, embedFs embed.FS) *Service {
+	cacheDir:= config.ConfigDir + "/conf"
 	_, err := os.Stat(cacheDir)
 	if os.IsNotExist(err) {
 		panic("Cache directory does not exist")
@@ -37,7 +40,7 @@ func NewService(nginx *nginx, cert *Cert, cacheDir string, embedFs embed.FS) *Se
 		log.Panicf("Failed to get directories: %v", err)
 	}
 
-	service := &Service{nginx: nginx, cert: cert, cacheDir: cacheDir, domains: domains, embedFs: embedFs}
+	service := &Service{nginx: nginx, cert: cert, cacheDir: cacheDir, domains: domains, embedFs: embedFs, isDev: config.IsDev}
 	go func() {
 		for {
 			service.checkAndRefreshCertificates()
@@ -52,36 +55,54 @@ func (s *Service) GetDomains() []string {
 	return s.domains
 }
 
-func (s *Service) AddDomain(domain string) error {
+func (s *Service) AddDomain(domain string) (error, string) {
+	log.Printf("Adding domain: %s", domain)
 	if contains(s.domains, domain) {
-		return errors.New("Domain already exists")
+		log.Printf("Domain %s already exists", domain)
+		return errors.New("Domain already exists"), ""
 	}
 	if !isValidDomain(domain) {
-		return errors.New("Invalid domain name")
+		log.Printf("Invalid domain name: %s", domain)
+		return errors.New("Invalid domain name"), ""
 	}
 	if !isDomainResolvable(domain) {
-		return errors.New("Domain is not resolvable")
+		log.Printf("Domain %s is not resolvable", domain)
+		return errors.New("Domain is not resolvable"), ""
 	}
 
 	err := os.Mkdir(s.cacheDir+"/"+domain, 0755)
 	if err != nil {
-		return err
+		log.Printf("Failed to create directory %s: %v", s.cacheDir+"/"+domain, err)
+		return err, ""
 	}
 
 	// Generate nginx.conf for the new domain
 	templatePaths, err := fs.Glob(s.embedFs, "ui/configs/nginx.tmpl")
 	if err != nil || len(templatePaths) == 0 {
-		return errors.New("template file not found")
+		return errors.New("template file not found"), ""
 	}
 	templatePath := templatePaths[0]
 	err = s.generateNginxConfig(domain, templatePath)
 	if err != nil {
+		log.Printf("Failed to generate nginx.conf for %s: %v", domain, err)
 		os.RemoveAll(s.cacheDir + "/" + domain)
-		return err
+		return err, ""
 	}
+	
+	// Generate SSL certificate for the new domain
+	err = s.cert.GetCertificate(domain, s.cacheDir+"/"+domain)
+	if err != nil {
+		log.Printf("Failed to get certificate for %s: %v", domain, err)
+		os.RemoveAll(s.cacheDir + "/" + domain)
+		return err, ""
+	}
+
 	s.domains = append(s.domains, domain)
 
-	return nil
+	//read config
+	content, err := s.nginx.GetConfig(domain)
+
+	return err, content
 }
 
 func (s *Service) RemoveDomain(domain string) error {
@@ -104,8 +125,12 @@ func (s *Service) checkAndRefreshCertificates() {
 	isRefreshedCertificates := false
 	for _, domain := range s.domains {
 		certPath := s.cacheDir + "/" + domain + "/fullchain.pem"
-		expirationTime := GetExpireTime(certPath)
-		if expirationTime == nil || expirationTime.Sub(time.Now().UTC()).Hours() < (7 * 24) {
+		expirationTime, certDomain, issuer := GetExpireTime(certPath)
+		log.Printf("Certificate for %s/%s expires on %s, issuer: %s", domain, certDomain, expirationTime, issuer)
+		if expirationTime == nil ||
+			expirationTime.Sub(time.Now().UTC()).Hours() < (7*24) ||
+			(!s.isDev && strings.Contains(issuer, "stg") ||
+				(certDomain != domain)) {
 			log.Printf("Certificate for %s is expired or will expire soon, refreshing...", domain)
 
 			isValid := isDomainResolvable(domain)
@@ -150,7 +175,7 @@ func (s *Service) generateNginxConfig(domain string, templatePath string) error 
 	}{
 		Domain:  domain,
 		Path:    filepath.Join(s.cacheDir, domain),
-		Backend: "http://localhost:3000-change me",
+		Backend: "http://localhost:3000",
 	}
 	err = tmpl.Execute(outputFile, data)
 	if err != nil {

@@ -37,17 +37,26 @@ install-supervisor:
 		echo "Supervisor is already installed. ✅"; \
 	fi'
 
-initial-deploy: build install-nginx install-supervisor
-	-ssh ${REMOTE_HOST} "mkdir -p /opt/ngx"
-	-scp -r dist/nginx-ui ${REMOTE_HOST}:/opt/ngx
+init:
 	@EMAIL=${EMAIL} PASS=${PASS} envsubst < ./supervisior/ngx.conf > ./dist/ngx.conf
+
+initial-deploy: build install-nginx install-supervisor init
+	-ssh ${REMOTE_HOST} "mkdir -p /opt/ngx"
+	-ssh ${REMOTE_HOST} "mkdir -p /etc/nginx/conf"
+	-ssh ${REMOTE_HOST} "mkdir -p /etc/nginx/certs"
+	-scp -r dist/nginx-ui ${REMOTE_HOST}:/opt/ngx
 	-scp -r ./dist/ngx.conf ${REMOTE_HOST}:/etc/supervisor/conf.d/ngx.conf
 	-ssh ${REMOTE_HOST} "supervisorctl reread; supervisorctl update; supervisorctl start ngx"
 	@echo "Initial deploying Nginx UI to $(REMOTE_HOST) is done. ✅"
 	
+reload-supervisor-config:
+	ssh ${REMOTE_HOST} "supervisorctl reread; supervisorctl update"
+	ssh ${REMOTE_HOST} "supervisorctl restart ngx"
+	@echo "Reloading Supervisor config on $(REMOTE_HOST) is done. ✅"
+
 deploy:
-	ssh ${REMOTE_HOST} "supervisorctl stop ngx"
+	-ssh ${REMOTE_HOST} "supervisorctl stop ngx"
 	scp -r dist/nginx-ui ${REMOTE_HOST}:/opt/ngx
-	ssh ${REMOTE_HOST} "supervisorctl start ngx"
+	-ssh ${REMOTE_HOST} "supervisorctl start ngx"
 
 .PHONY: build build-local run-local initial-deploy install-nginx install-supervisor deploy
