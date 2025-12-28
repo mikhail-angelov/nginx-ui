@@ -29,7 +29,7 @@ type Service struct {
 }
 
 func NewService(nginx *nginx, cert *Cert, config *Config, embedFs embed.FS) *Service {
-	cacheDir:= config.ConfigDir + "/conf"
+	cacheDir := config.ConfigDir + "/conf"
 	_, err := os.Stat(cacheDir)
 	if os.IsNotExist(err) {
 		panic("Cache directory does not exist")
@@ -88,7 +88,6 @@ func (s *Service) AddDomain(domain string) (error, string) {
 		os.RemoveAll(s.cacheDir + "/" + domain)
 		return err, ""
 	}
-	
 	// Generate SSL certificate for the new domain
 	err = s.cert.GetCertificate(domain, s.cacheDir+"/"+domain)
 	if err != nil {

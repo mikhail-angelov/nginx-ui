@@ -21,10 +21,11 @@ func main() {
 	service := server.NewService(nginx, cert, config, embedFs)
 	web := server.NewWeb(nginx, service, config, embedFs)
 
-	log.Printf("Server started (dev:%s) on :%s port ✅", strconv.FormatBool(config.IsDev), config.Port)
+	log.Printf("Server started (dev:%s) on 127.0.0.1:%s port ✅", strconv.FormatBool(config.IsDev), config.Port)
+
 	// make sure to use the cert manager's HTTP handler is expose on 80 port for http-01 challenge
 	// .well-known/acme-challenge ... path
-	log.Panic(http.ListenAndServe(":"+config.Port, cert.GetCertManager().HTTPHandler(web.GetRouter())))
+	log.Panic(http.ListenAndServe("127.0.0.1:"+config.Port, cert.GetCertManager().HTTPHandler(web.GetRouter())))
 
 	os.Exit(1)
 }

@@ -1,0 +1,9 @@
+server {
+    listen   443 ssl;
+    server_name {{.Domain}};
+
+    location / {
+        proxy_pass {{.Backend}};
+        proxy_set_header Host $http_host;
+    }
+}

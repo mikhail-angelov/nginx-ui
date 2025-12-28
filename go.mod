@@ -1,6 +1,6 @@
 module github.com/mikhail-angelov/nginx-ui
 
-go 1.23.1
+go 1.25
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1

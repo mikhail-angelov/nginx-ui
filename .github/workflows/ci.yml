@@ -4,17 +4,23 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go 1.23
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.23
-    - name: Copy Repo Files dd
-      uses: actions/checkout@v2
-    - name: Build
-      run: |
-       cd app
-       go build -o nginx-ui 
-    
-    - name: Test
-      run: go test ./... -v
-    
+      - name: Set up Go 1.25
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.25
+      - name: Copy Repo Files dd
+        uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: go mod download
+      - name: Build
+        run: |
+          cd app
+          go build -o nginx-ui
+
+      - name: Run Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          args: --timeout=5m
+      - name: Test
+        run: go test ./... -v

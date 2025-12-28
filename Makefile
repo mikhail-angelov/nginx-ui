@@ -2,7 +2,18 @@ include .env
 
 test:
 	go test -v ./...
-	
+
+.PHONY: lint
+lint: ## Lint Go code (requires golangci-lint)
+	@echo "Checking for golangci-lint..."
+	@GOLANGCI_LINT_PATH="$(shell go env GOPATH)/bin/golangci-lint"; \
+	if [ ! -f "$$GOLANGCI_LINT_PATH" ]; then \
+		echo "golangci-lint not found. curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin;"; \
+		exit 1; \
+	fi
+	@echo "Linting code..."
+	@$(shell go env GOPATH)/bin/golangci-lint run
+
 build:
 	GOOS=linux GOARCH=amd64 go build -o dist/nginx-ui ./app
 
@@ -44,11 +55,15 @@ initial-deploy: build install-nginx install-supervisor init
 	-ssh ${REMOTE_HOST} "mkdir -p /opt/ngx"
 	-ssh ${REMOTE_HOST} "mkdir -p /etc/nginx/conf"
 	-ssh ${REMOTE_HOST} "mkdir -p /etc/nginx/certs"
+	-ssh ${REMOTE_HOST} "mkdir -p /etc/nginx/ssl"
+	-ssh ${REMOTE_HOST} "openssl dhparam -out /etc/nginx/ssl/dhparams.pem 4096"
+	-scp -r nginx/mime.types ${REMOTE_HOST}:/etc/nginx/mime.types
+	-scp -r nginx/nginx.conf ${REMOTE_HOST}:/etc/nginx/nginx.conf
 	-scp -r dist/nginx-ui ${REMOTE_HOST}:/opt/ngx
 	-scp -r ./dist/ngx.conf ${REMOTE_HOST}:/etc/supervisor/conf.d/ngx.conf
 	-ssh ${REMOTE_HOST} "supervisorctl reread; supervisorctl update; supervisorctl start ngx"
 	@echo "Initial deploying Nginx UI to $(REMOTE_HOST) is done. ✅"
-	
+
 reload-supervisor-config:
 	ssh ${REMOTE_HOST} "supervisorctl reread; supervisorctl update"
 	ssh ${REMOTE_HOST} "supervisorctl restart ngx"
