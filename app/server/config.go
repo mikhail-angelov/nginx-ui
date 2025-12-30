@@ -2,6 +2,7 @@ package server
 
 import "flag"
 
+// Config holds application configuration parameters.
 type Config struct {
 	IsDev      bool
 	IsDocker   bool
@@ -12,6 +13,7 @@ type Config struct {
 	RemoteHost string
 }
 
+// LoadConfig parses command-line flags and returns a Config instance.
 func LoadConfig() *Config {
 	isDev := flag.Bool("dev", false, "a bool")
 	isDocker := flag.Bool("docker", false, "a bool")

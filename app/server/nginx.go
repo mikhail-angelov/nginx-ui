@@ -2,29 +2,32 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-type nginx struct {
+// Nginx represents an nginx configuration manager.
+type Nginx struct {
 	rootPath string
 	isDev    bool
 	isDocker bool
 }
 
-func NewNginx(config *Config) *nginx {
-	return &nginx{rootPath: config.ConfigDir, isDev: config.IsDev, isDocker: config.IsDocker}
+// NewNginx creates a new Nginx instance with the given configuration.
+func NewNginx(config *Config) *Nginx {
+	return &Nginx{rootPath: config.ConfigDir, isDev: config.IsDev, isDocker: config.IsDocker}
 }
 
-func (n *nginx) getFullName(domain string) string {
+func (n *Nginx) getFullName(domain string) string {
 	if domain == "main" {
 		return n.rootPath + "/nginx.conf"
 	}
 	return n.rootPath + "/conf/" + domain + "/nginx.conf"
 }
-func (n *nginx) runNginxCommand(args []string) string {
+func (n *Nginx) runNginxCommand(args []string) string {
 	executable := "nginx"
 	if n.isDocker {
 		executable = "docker"
@@ -40,11 +43,12 @@ func (n *nginx) runNginxCommand(args []string) string {
 	return string(stdoutStderr)
 }
 
-func (n *nginx) CheckNewConfig(name string, newContent string) error {
+// CheckNewConfig validates a new configuration for a domain.
+func (n *Nginx) CheckNewConfig(name, newContent string) error {
 	fullPath := n.getFullName(name)
 	err := os.Rename(fullPath, fullPath+".orig")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to rename config: %w", err)
 	}
 	defer os.Rename(fullPath+".orig", fullPath)
 	err = n.SetConfig(name, newContent)
@@ -58,27 +62,30 @@ func (n *nginx) CheckNewConfig(name string, newContent string) error {
 	return errors.New("invalid config")
 }
 
-func (n *nginx) GetConfig(name string) (string, error) {
+// GetConfig retrieves the configuration content for a domain.
+func (n *Nginx) GetConfig(name string) (string, error) {
 	fullPath := n.getFullName(name)
-	content, err := os.ReadFile(fullPath)
+	content, err := os.ReadFile(fullPath) //nolint:gosec // file path is constructed from validated domain name
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read config: %w", err)
 	}
 	return string(content), nil
 }
 
-func (n *nginx) SetConfig(name string, content string) error {
+// SetConfig writes the configuration content for a domain and refreshes nginx.
+func (n *Nginx) SetConfig(name, content string) error {
 	fullPath := n.getFullName(name)
-	err := os.WriteFile(fullPath, []byte(content), 0644)
+	err := os.WriteFile(fullPath, []byte(content), 0o644) //nolint:gosec // nginx configuration files need to be readable by nginx process
 	if err != nil {
 		log.Printf("Failed to write config %s: %v", fullPath, err)
-		return err
+		return fmt.Errorf("failed to write config: %w", err)
 	}
 	n.RefreshConfig()
 	return nil
 }
 
-func (n *nginx) RefreshConfig()  {
+// RefreshConfig reloads nginx configuration if syntax is valid.
+func (n *Nginx) RefreshConfig() {
 	log.Println("reloading nginx config")
 	status := n.runNginxCommand([]string{"-t"})
 	if strings.Contains(status, "syntax is ok") {

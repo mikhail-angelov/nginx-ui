@@ -9,8 +9,7 @@ import (
 
 // Router is a simple HTTP router
 type Router struct {
-	mux     *http.ServeMux
-	embedFs embed.FS
+	mux *http.ServeMux
 }
 
 // NewRouter creates a new Router
@@ -24,12 +23,12 @@ func NewRouter(embedFs embed.FS) *Router {
 }
 
 // GET registers a new GET route
-func (r *Router) GET(auth bool, pattern string, handler http.HandlerFunc) {
+func (r *Router) GET(_ bool, pattern string, handler http.HandlerFunc) {
 	r.mux.HandleFunc(pattern, r.withContext(handler))
 }
 
 // POST registers a new POST route
-func (r *Router) POST(auth bool, pattern string, handler http.HandlerFunc) {
+func (r *Router) POST(_ bool, pattern string, handler http.HandlerFunc) {
 	r.mux.HandleFunc(pattern, r.withContext(handler))
 }
 
@@ -44,8 +43,8 @@ func (r *Router) withContext(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// This is used to avoid context key collisions
-// it serves as a domain for the context keys
+// ContextKey is used to avoid context key collisions.
+// It serves as a domain for the context keys.
 type ContextKey string
 
 // Returns a shallow-copy of the request with an updated context,

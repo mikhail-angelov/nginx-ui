@@ -4,8 +4,8 @@ import (
 	"embed"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
+	"time"
 
 	"github.com/mikhail-angelov/nginx-ui/app/server"
 )
@@ -25,7 +25,14 @@ func main() {
 
 	// make sure to use the cert manager's HTTP handler is expose on 80 port for http-01 challenge
 	// .well-known/acme-challenge ... path
-	log.Panic(http.ListenAndServe("127.0.0.1:"+config.Port, cert.GetCertManager().HTTPHandler(web.GetRouter())))
+	httpServer := &http.Server{
+		Addr:         "127.0.0.1:" + config.Port,
+		Handler:      cert.GetCertManager().HTTPHandler(web.GetRouter()),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
 
-	os.Exit(1)
+	log.Printf("Starting server on %s", httpServer.Addr)
+	log.Panic(httpServer.ListenAndServe())
 }
